@@ -1,0 +1,30 @@
+{
+  "train_seasons": [
+    "2021-22",
+    "2022-23",
+    "2023-24"
+  ],
+  "target_season": "2024-25",
+  "n_prev_games": 5,
+  "data_root": "data",
+  "model_dir": "models",
+  "processed_dir": "processed",
+  "feature_cols": [
+    "prev5_minutes",
+    "prev5_goals_scored",
+    "prev5_assists",
+    "prev5_clean_sheets",
+    "prev5_goals_conceded",
+    "prev5_own_goals",
+    "prev5_penalties_saved",
+    "prev5_penalties_missed",
+    "prev5_yellow_cards",
+    "prev5_red_cards",
+    "prev5_saves",
+    "prev5_bonus",
+    "prev5_bps",
+    "prev5_total_points",
+    "home_game",
+    "opp_difficulty"
+  ]
+}
