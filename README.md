@@ -64,18 +64,11 @@ pyarrow
 pulp
 ```
 
-Install with:
-
-```bash
-pip install -r requirements.txt
-```
-
 ---
 ### Installation
 
 ```bash
 git clone https://github.com/SanketAdlak/FPLpredictor.git
-cd FPLpredictor
 
 python -m venv venv
 venv\Scripts\activate             # On Windows
@@ -163,10 +156,7 @@ R² by position:
 ### 3. Predict and Optimise Squad
 
 ```bash
-python infer.py data/2024-25/merged_gw.csv \
-                --players_raw data/2024-25/players_raw.csv \
-                --season 2024-25 \
-                --out predictions_2024-25.csv
+python infer.py data/2024-25/merged_gw.csv --players_raw data/2024-25/players_raw.csv --season 2024-25 --out predictions_2024-25.csv
 ```
 
 ####  **Optimal Squad Output**
