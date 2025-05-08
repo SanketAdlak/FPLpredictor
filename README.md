@@ -33,6 +33,21 @@ The pipeline performs:
   - Home/away performance
   - Opposition difficulty ratings
 
+### 3. Team Optimization
+- Maximizes predicted total points
+- Enforces FPL constraints:
+  - Budget limit (default: £100m)
+  - Squad composition:
+    - 2 Goalkeepers
+    - 5 Defenders
+    - 5 Midfielders
+    - 3 Forwards
+  - Maximum 3 players per team
+- Provides detailed team analysis:
+  - Position-wise breakdown
+  - Team distribution
+  - Value distribution
+
 ##  Requirements
 
 - Python 3.8+
@@ -224,12 +239,6 @@ Each season folder (e.g., `data/2024-25/`) contains:
 
   * 2 GKs, 5 DEFs, 5 MIDs, 3 FWDs
   * At least 3 DEF, 2 MID, 1 FWD in starting XI
-
-* Provides detailed team analysis:
-  * Position-wise breakdown
-  * Team distribution
-  * Value distribution
-
 
 
 ## Limitations
