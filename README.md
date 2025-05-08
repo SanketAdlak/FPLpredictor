@@ -75,6 +75,7 @@ pip install -r requirements.txt
 
 ```bash
 git clone https://github.com/SanketAdlak/FPLpredictor.git
+cd FPLpredictor
 
 python -m venv venv
 venv\Scripts\activate             # On Windows
