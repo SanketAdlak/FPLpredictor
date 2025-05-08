@@ -12,16 +12,6 @@ The pipeline performs:
 2. **Evaluation** using standard metrics (MAE, RMSE, R²).
 3. **Inference** to predict points for a given season and generate an optimal squad.
 
-## Model Features
-
-The system uses the following features for prediction:
-- Match statistics (minutes, goals, assists, clean sheets)
-- Performance metrics (bonus points, BPS)
-- Advanced metrics (influence, creativity, threat, ICT index)
-- Expected stats (xG, xA, xGI)
-- Team and position encodings
-- Player cost
-
 ## Features
 
 ### 1. Position-Specific Models
