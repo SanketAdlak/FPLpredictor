@@ -1,72 +1,16 @@
+
 # Fantasy Football Prediction System
 
-This system predicts fantasy football player performance using machine learning models trained on historical Premier League data.
+This system predicts Fantasy Premier League (FPL) player performance using machine learning models trained on historical data. It also selects an optimal 15-player squad using point predictions, following official FPL rules.
 
 
-## Overview
+##  Overview
 
-This system uses historical FPL data to:
-1. Train position-specific machine learning models for point predictions
-2. Evaluate model performance with detailed metrics
-3. Select optimal teams within FPL constraints
-4. Provide detailed analysis and visualizations
+The pipeline performs:
 
-## Requirements
-
-- Python 3.8+
-- Required packages listed in `requirements.txt`
-- Jupyter Notebook (for data preparation)
-
-## Setup
-
-1. Create and activate a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-## Data Preparation
-
-1. Run the Jupyter notebook to prepare the training data:
-```bash
-jupyter notebook Data_Preparation_updated.ipynb
-```
-
-The notebook will:
-- Load historical player data from multiple seasons (2021-22, 2022-23, 2023-24)
-- Process team difficulty ratings based on final league positions
-- Generate features including:
-  - Performance metrics (goals, assists, clean sheets, etc.)
-  - Expected points (xP)
-  - Team and position encodings
-  - Player statistics (bonus points, influence, creativity, threat)
-- Create the final dataset `fantasy_football_data.csv`
-
-## Training Models
-
-Run the training script to build position-specific prediction models:
-
-```bash
-python src/train.py
-```
-
-This will:
-1. Load the prepared dataset
-2. Split data into training and validation sets
-3. Train separate models for each position (GKP, DEF, MID, FWD)
-4. Select the best performing model for each position
-5. Save model artifacts in the `models/` directory:
-   - Trained models (`.joblib`)
-   - Feature scalers
-   - Feature information
-   - Training results
-
-The script automatically creates timestamped versions and symlinks to the latest models.
+1. **Training** position-specific regression models using historical season data.
+2. **Evaluation** using standard metrics (MAE, RMSE, R²).
+3. **Inference** to predict points for a given season and generate an optimal squad.
 
 ## Model Features
 
@@ -114,152 +58,199 @@ The system uses the following features for prediction:
   - Team distribution
   - Value distribution
 
-## Installation
+##  Requirements
 
-1. Clone the repository:
-```bash
-git clone <repository_url>
-cd fantasy-football-predictor
+- Python 3.8+
+- All dependencies are listed in `requirements.txt`
+
+
+##  requirements.txt
+
+```txt
+pandas
+numpy
+scikit-learn
+pyarrow
+pulp
 ```
 
-2. Create and activate a virtual environment:
+Install with:
+
 ```bash
+pip install -r requirements.txt
+```
+
+---
+### Installation
+
+```bash
+git clone https://github.com/SanketAdlak/FPLpredictor.git
+cd smai_a2
+
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate             # On Windows
+# OR
+source venv/bin/activate          # On macOS/Linux
+
+pip install -r requirements.txt
+````
+
+
+##  Project Structure
+
+```
+src/
+├── data/
+│   └── 2021-22/
+│   └── 2022-23/
+│   └── 2023-24/
+│   └── 2024-25/
+│       ├── players_raw.csv
+│       └── merged_gw.csv
+├── models/              # Auto-created during training
+├── processed/           # Auto-created feature storage
+├── train.py             # Train or fine-tune model
+├── eval.py              # Evaluate model on test season
+├── infer.py             # Predict points and select squad
+├── requirements.txt
+└── README.md
 ```
 
-3. Install dependencies:
-```bash
-pip install pandas numpy scikit-learn joblib pulp matplotlib seaborn
-```
 
-## Data Requirements
+## How to Use
 
-### Training Data Format
-Each season directory (`data/YYYY-YY/`) should contain:
-
-1. `players_raw.csv`:
-```
-name,position,team,value,now_cost,element_type,...
-```
-
-2. `merged_gw.csv`:
-```
-name,position,team,minutes,goals_scored,assists,...
-```
-
-### Inference Data Format
-Input CSV must contain:
-```
-name,position,team,value,minutes,goals_scored,assists,clean_sheets,
-goals_conceded,own_goals,penalties_missed,yellow_cards,red_cards,
-saves,bonus,bps,influence,creativity,threat,ict_index
-```
-
-## Usage Guide
-
-### 1. Training Models
+### 1. Train the Model
 
 ```bash
-python src/train.py
+python train.py
 ```
 
-Process:
-1. Loads historical data from season directories
-2. Preprocesses and engineers features
-3. Trains position-specific models
-4. Performs model selection using validation data
-5. Saves model artifacts:
-   - `model_latest.joblib`: Position-specific models
-   - `scaler_latest.joblib`: Feature scaler
-   - `info_latest.json`: Feature information
-   - `results_latest.json`: Training results
+Saves:
 
-### 2. Model Evaluation
+* `models/*.joblib` (1 per position)
+* `models/config.json`
+* `processed/features.parquet`
+
+#### Quick Start (Skip Training)
+- Pretrained models are included in the repository.  
+- You can skip train.py and directly run eval.py and infer.py
+
+---
+
+### 2. Evaluate Model Performance
 
 ```bash
-python src/eval.py
+python eval.py
 ```
 
-Generates:
-1. Overall metrics:
-   - Root Mean Square Error (RMSE)
-   - Mean Absolute Error (MAE)
-   - R² Score
+#### **Evaluation Results**
 
-2. Position-wise metrics:
-   - Performance breakdown by position
-   - Position-specific error analysis
+```
+MAE by position:
+  GK: 1.894
+ DEF: 2.182
+ MID: 1.858
+ FWD: 2.587
+ ALL: 2.046
 
-3. Visualizations:
-   - Predicted vs Actual points scatter plot
-   - Residual analysis plot
-   - Feature importance plots
+MSE by position:
+  GK: 6.536
+ DEF: 7.267
+ MID: 8.156
+ FWD: 11.766
+ ALL: 8.053
 
-### 3. Making Predictions
+R² by position:
+  GK: 0.090
+ DEF: 0.001
+ MID: 0.095
+ FWD: 0.082
+ ALL: 0.077
+```
+
+---
+
+### 3. Predict and Optimise Squad
 
 ```bash
-# Get predictions for all players
-python src/infer.py --input data/fantasy_football_data.csv
-
-# Select optimal team
-python src/infer.py --input data/fantasy_football_data.csv --optimize --budget 100.0
+python infer.py data/2024-25/merged_gw.csv \
+                --players_raw data/2024-25/players_raw.csv \
+                --season 2024-25 \
+                --out predictions_2024-25.csv
 ```
 
-Options:
-- `--input`: Path to player data CSV
-- `--optimize`: Enable team optimization
-- `--budget`: Team budget in millions (default: 100.0)
-- `--num_players`: Squad size (default: 15)
+####  **Optimal Squad Output**
 
-## Model Performance
 
-Current model performance on example data:
+|name      |     team     |    position | cost_m | predicted_points | Starting|
+| --- | --- | --- | --- | --- | --- |
+|Daniel Muñoz  |   Crystal Palace   |      DEF   |   5.2   |      5.61    |     True|
+| Diogo Dalot Teixeira    |     Man Utd    |     DEF   |   5.0    |     4.35    |     True|
+| Marc Cucurella     |    Chelsea     |    DEF  |    5.4     |    4.68      |   True|
+| Nikola Milenković  |  Nott'm Forest    |     DEF   |   5.1    |     4.78     |    True|
+|Jørgen Strand Larsen  |        Wolves    |     FWD   |   5.4    |     4.15     |    True|
+|     Dean Henderson   |  Crystal Palace  |       GK   |    4.6  |       4.16    |     True|
+|Bruno Borges Fernandes  |      Man Utd   |      MID   |   8.6    |     4.77     |    True|
+|         Ismaïla Sarr   |  Crystal Palace|        MID  |    5.7  |       4.49   |      True|
+|        Jarrod Bowen   |     West Ham   |      MID    |  7.6     |    4.40     |    True|
+|        Mohamed Salah   |    Liverpool   |      MID    | 13.8      |   4.90     |    True|
+|       Morgan Rogers   |   Aston Villa  |       MID  |    5.6    |     4.57    |     True|
+|      Jurriën Timber   |      Arsenal   |      DEF   |   5.6     |    4.29     |    False|
+|           Liam Delap  |       Ipswich  |       FWD  |    5.6     |    3.68    |     False|
+|          Yoane Wissa  |     Brentford  |       FWD   |   6.6     |    3.82     |    False|
+|             Matz Sels |   Nott'm Forest |        GK   |    5.1   |      3.97  |       False|
 
-1. Overall Metrics:
-   - RMSE: 5.14
-   - MAE: 4.29
-   - R²: 0.93
 
-2. Position-wise Performance:
-   ```
-   GKP:
-   - RMSE: 3.97
-   - MAE: 3.69
-   - R²: 0.89
+---
+This above output is the prediction for Gameweek 32.  
 
-   DEF:
-   - RMSE: 4.93
-   - MAE: 3.58
-   - R²: 0.91
+  
 
-   MID:
-   - RMSE: 5.85
-   - MAE: 5.10
-   - R²: 0.90
 
-   FWD:
-   - RMSE: 5.59
-   - MAE: 4.80
-   - R²: 0.88
-   ```
+> **Note:** For visualizations and plots (e.g., feature importance, prediction vs. actual), you can use the provided data in a **Jupyter Notebook**.  
+> The notebook environment is ideal for exploring results interactively.  
+> Before running notebook, uncommnet the packages from requirements.txt and install all of them.
 
-## Best Practices
+---
 
-1. Data Preparation:
-   - Use recent seasons for training (e.g., last 3 seasons)
-   - Ensure consistent team and player names
-   - Handle missing values appropriately
+## Input Data Format
 
-2. Model Training:
-   - Regular retraining with new data
-   - Monitor position-wise performance
-   - Validate feature importance
+Each season folder (e.g., `data/2024-25/`) contains:
 
-3. Team Selection:
-   - Consider upcoming fixtures
-   - Balance team value distribution
-   - Account for team rotation
+### 1. `players_raw.csv`
+
+| name       | position | team | now\_cost | element\_type | ... |
+| ---------- | -------- | ---- | --------- | ------------- | --- |
+| Haaland E. | FWD      | MCI  | 125       | 4             | ... |
+
+### 2. `merged_gw.csv`
+
+| name       | round | minutes | goals\_scored | assists | ... |
+| ---------- | ----- | ------- | ------------- | ------- | --- |
+| Haaland E. | 1     | 90      | 1             | 0       | ... |
+
+
+
+## Model Features
+
+* Rolling stats from previous games (e.g., 5-game window)
+* Match stats: goals, assists, minutes, clean sheets
+* Advanced stats: BPS, influence, creativity, threat
+* Context features: home/away, opponent strength
+
+---
+
+## Team Optimization Rules
+
+* Max budget: £100.0m
+* Squad size: 15 players
+* Max 3 players per club
+* Valid formation enforced
+
+  * 2 GKs, 5 DEFs, 5 MIDs, 3 FWDs
+  * At least 3 DEF, 2 MID, 1 FWD in starting XI
+
+
 
 ## Limitations
 
@@ -278,19 +269,12 @@ Current model performance on example data:
    - Team formation changes
    - Weather conditions
 
-## Future Improvements
 
-1. Model Enhancements:
-   - Deep learning models
-   - Ensemble methods
-   - Time series features
 
-2. Additional Features:
-   - Fixture difficulty prediction
-   - Player price change prediction
-   - Transfer suggestion system
+##  Future Enhancements
 
-3. UI/UX:
-   - Web interface
-   - Real-time updates
-   - Team visualization
+* Fixture-aware prediction
+* Transfer suggestion engine
+* Player form tracking
+* Web-based UI
+
