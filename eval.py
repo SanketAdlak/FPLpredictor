@@ -35,7 +35,6 @@ def main():
     ap = argparse.ArgumentParser(description="Evaluate FPL models on hold‑out season")
     ap.add_argument("--model_dir", default="models", help="Directory produced by train.py")
     ap.add_argument("--processed_dir", default="processed", help="Where features.parquet sits")
-    ap.add_argument("--metric", choices=METRICS.keys(), default="mae")
     args = ap.parse_args()
 
     model_dir = Path(args.model_dir)
@@ -44,37 +43,47 @@ def main():
     feats = pd.read_parquet(Path(args.processed_dir) / "features.parquet")
     test_df = feats[feats["Season"] == cfg["target_season"]].copy()
 
-    metric_fn = METRICS[args.metric]
-    results = {}
+    results = {metric: {} for metric in METRICS}
+
     for pos in ["GK", "DEF", "MID", "FWD"]:
         mdl_path = model_dir / f"{pos}_model.pkl"
-        sc_path  = model_dir / f"{pos}_scaler.pkl"
+        sc_path = model_dir / f"{pos}_scaler.pkl"
         if not mdl_path.exists():
             continue
-        model  = joblib.load(mdl_path)
+        model = joblib.load(mdl_path)
         scaler = joblib.load(sc_path)
-        mask   = test_df["position"] == pos
+        mask = test_df["position"] == pos
         if mask.sum() == 0:
             continue
         X = scaler.transform(test_df.loc[mask, cfg["feature_cols"]].fillna(0.0))
         y_true = test_df.loc[mask, "total_points"].to_numpy()
         y_pred = model.predict(X)
-        results[pos] = metric_fn(y_true, y_pred)
-    # overall
-    all_true = []
-    all_pred = []
-    for pos in results.keys():
-        mdl = joblib.load(model_dir / f"{pos}_model.pkl")
-        sc  = joblib.load(model_dir / f"{pos}_scaler.pkl")
-        msk = test_df["position"] == pos
-        Xp  = sc.transform(test_df.loc[msk, cfg["feature_cols"]].fillna(0.0))
-        all_true.extend(test_df.loc[msk, "total_points"].to_numpy())
-        all_pred.extend(mdl.predict(Xp))
-    results["ALL"] = metric_fn(np.array(all_true), np.array(all_pred))
+        for name, fn in METRICS.items():
+            results[name][pos] = fn(y_true, y_pred)
 
-    print(f"\nEvaluation metric = {args.metric.upper()}\n" + "-"*35)
-    for k, v in results.items():
-        print(f"{k:>3}: {v:.3f}")
+    # Overall metrics
+    all_true, all_pred = [], []
+    for pos in ["GK", "DEF", "MID", "FWD"]:
+        if pos not in results["mae"]:
+            continue
+        model = joblib.load(model_dir / f"{pos}_model.pkl")
+        scaler = joblib.load(model_dir / f"{pos}_scaler.pkl")
+        mask = test_df["position"] == pos
+        X = scaler.transform(test_df.loc[mask, cfg["feature_cols"]].fillna(0.0))
+        y_true = test_df.loc[mask, "total_points"].to_numpy()
+        y_pred = model.predict(X)
+        all_true.extend(y_true)
+        all_pred.extend(y_pred)
+    for name, fn in METRICS.items():
+        results[name]["ALL"] = fn(np.array(all_true), np.array(all_pred))
+
+    # Print results
+    print("\nEvaluation Results\n" + "-" * 40)
+    for name in ["mae", "mse", "r2"]:
+        print(f"\n{name.upper():>4} by position:")
+        for pos in ["GK", "DEF", "MID", "FWD", "ALL"]:
+            if pos in results[name]:
+                print(f"  {pos:>3}: {results[name][pos]:.3f}")
 
 if __name__ == "__main__":
     main()
